@@ -1,8 +1,10 @@
 ﻿
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data.SqlClient;
 using System.Windows.Data;
 using ModernDashboard.Model;
+using MySql.Data.MySqlClient;
 
 namespace ModernDashboard.ViewModel
 {
@@ -13,17 +15,27 @@ namespace ModernDashboard.ViewModel
 
         public MusicViewModel()
         {
-            ObservableCollection<MusicItems> musicItems = new ObservableCollection<MusicItems>
+            ObservableCollection<MusicItems> musicItems = new ObservableCollection<MusicItems>();
+            string connectionString = "Server=localhost;Port=3306;Database=mvvm;Uid=root;Pwd=123456;";
+            string query = "SELECT * FROM music";
+
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
-
-                new MusicItems { MusicName = "Bass", MusicImage = @"Assets/note_icon.png" },
-                new MusicItems { MusicName = "Beats", MusicImage = @"Assets/note_icon.png" },
-                new MusicItems { MusicName = "Electronic", MusicImage = @"Assets/note_icon.png" },
-                new MusicItems { MusicName = "Hip hop", MusicImage = @"Assets/note_icon.png" },
-                new MusicItems { MusicName = "Deep House", MusicImage = @"Assets/note_icon.png" },
-                new MusicItems { MusicName = "Instrumental", MusicImage = @"Assets/note_icon.png" }
-
-            };
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    connection.Open();
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string musicName = reader.GetString("ganere");
+                            string musicImage = reader.GetString("image_path");
+                            MusicItems musicItem = new MusicItems { MusicName = musicName, MusicImage = musicImage };
+                            musicItems.Add(musicItem);
+                        }
+                    }
+                }
+            }
 
             MusicItemsCollection = new CollectionViewSource { Source = musicItems };
             MusicItemsCollection.Filter += MenuItems_Filter;
